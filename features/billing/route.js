@@ -7,10 +7,10 @@ const moment = require("moment");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SECRET_KEY = "your_secret_key";
-const verifyToken = require("../../Middleware/verifytoken");
+// const verifyToken = require("../../Middleware/verifytoken");
 const Cart = require("../cart/model");
 const Billing = require("./model");
-const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer")
 
 const router = express.Router();
 
@@ -35,6 +35,7 @@ const sendEmail = async (toEmail, subject, body) => {
     };
 
     await transporter.sendMail(mailOptions);
+    // console.log("Email sent successfully!");
   } catch (error) {
     console.error("Error sending email:", error.message);
   }
@@ -107,10 +108,10 @@ const addBilling = async (data, UserId) => {
       )
       .join("");
 
-    await sendEmail(
-      data.ContactEmail,
-      "Your Billing Details Have Been Successfully Added!",
-      `
+      await sendEmail(
+        data.ContactEmail,
+        "Your Billing Details Have Been Successfully Added!",
+        `
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -215,8 +216,8 @@ const addBilling = async (data, UserId) => {
                 <!-- Body -->
                 <div class="email-body">
                   <h2>Hello ${data.FirstName || "Customer"} ${
-        data.LastName || ""
-      },</h2>
+          data.LastName || ""
+        },</h2>
   
                   <p>Thank you for choosing our services. Here are the details of your recent billing:</p>
         
@@ -228,9 +229,9 @@ const addBilling = async (data, UserId) => {
                           <strong>${item.Carats} Carat ${
                           item.Shape
                         } Diamond</strong><br>
-                          Color: ${item.Color}, Clarity: ${
-                          item.Clarity
-                        }, Lab: ${item.Lab}, Cut: ${item.Cut}<br>
+                          Color: ${item.Color}, Clarity: ${item.Clarity}, Lab: ${
+                          item.Lab
+                        }, Cut: ${item.Cut}<br>
                           Quantity: ${item.Quantity} x $${item.Price.toFixed(
                           2
                         )}<br>
@@ -258,19 +259,21 @@ const addBilling = async (data, UserId) => {
             </body>
             </html>
           `
-    );
+      );
 
-    const updateCheckoutStatus = await Cart.updateMany(
-      { UserId, IsCheckout: false, IsDelete: false }, // Conditions
-      { $set: { IsCheckout: true, IsDelete: true } } // Update fields
-    );
+      const updateCheckoutStatus = await Cart.updateMany(
+        { UserId, IsCheckout: false, IsDelete: false }, // Conditions
+        { $set: { IsCheckout: true, IsDelete: true } }   // Update fields
+      );
+  
 
-    // const updateCheckoutStatus = await Cart.findByIdAndUpdate(
-    //   { UserId, IsCheckout: false, IsDelete: false },
-    //   { $set: { IsCheckout: true, IsDelete: true } } ,
-    //   { new : true } // Assuming you want to mark as checked out
-    // );
-
+      // const updateCheckoutStatus = await Cart.findByIdAndUpdate(
+      //   { UserId, IsCheckout: false, IsDelete: false },
+      //   { $set: { IsCheckout: true, IsDelete: true } } ,
+      //   { new : true } // Assuming you want to mark as checked out
+      // );
+  
+      // console.log(updateCheckoutStatus, "updateCheckoutStatus");  
 
     return {
       statusCode: 200,
@@ -289,6 +292,7 @@ const addBilling = async (data, UserId) => {
 
 router.post("/addbilling", async (req, res) => {
   try {
+    // console.log(req.body, "Received Data");
 
     // Generate a unique Billing ID
     req.body.BillingId = Date.now();
@@ -310,72 +314,79 @@ router.post("/addbilling", async (req, res) => {
 });
 
 const fetchBillingDetails = async () => {
-  const billingdetail = await Billing.aggregate([
-    {
-      $match: {
-        IsDelete: false,
+  try {
+    const billingDetails = await Billing.aggregate([
+      {
+        $match: {
+          IsDelete: false, 
+        },
       },
-    },
-    {
-      $project: {
-        BillingId: 1,
-        UserId: 1,
-        ContactEmail: 1,
-        Country: 1,
-        FirstName: 1,
-        LastName: 1,
-        Appartment: 1,
-        City: 1,
-        State: 1,
-        PinCode: 1,
-        Phone: 1,
-        Quantity: 1,
-        Image: 1,
-        Price: 1,
-        Carats: 1,
-        Shape: 1,
-        Color: 1,
-        Clarity: 1,
-        Lab: 1,
-        Cut: 1,
-        SKU: 1,
-        createdAt: 1,
-        updatedAt: 1,
+      {
+        $project: {
+          BillingId: 1,
+          UserId: 1,
+          ContactEmail: 1,
+          Country: 1,
+          FirstName: 1,
+          LastName: 1,
+          Appartment: 1,
+          City: 1,
+          State: 1,
+          PinCode: 1,
+          Phone: 1,
+          Quantity: 1,
+          Image: 1,
+          Price: 1,
+          Carats: 1,
+          Shape: 1,
+          Color: 1,
+          Clarity: 1,
+          Lab: 1,
+          Cut: 1,
+          SKU: 1,
+          IsDelete:1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
       },
-    },
-    {
-      $sort: { createdAt: -1 }, // Sort by `createdAt` in descending order
-    },
-  ]);
+      {
+        $sort: { createdAt: -1 }, // Sort by `createdAt` in descending order
+      },
+    ]);
+    const billingCount = billingDetails.length;
 
-  const billingdetailCount = billingdetail.length;
-  const usersCount = await Billing.countDocuments({ IsDelete: false });
-
-  return {
-    statusCode: billingdetail.length > 0 ? 200 : 204,
-    message:
-      billingdetail.length > 0
-        ? "Billing details retrieved successfully"
+    return {
+      statusCode: billingCount > 0 ? 200 : 204,
+      message: billingCount > 0 
+        ? "Billing details retrieved successfully" 
         : "No billing details found",
-    data: billingdetail,
-    TotalConut: usersCount,
-    // TotalConut: usersCount,
-  };
+      data: billingDetails,
+      totalCount: billingCount, // Consistent key for the total count
+    };
+  } catch (error) {
+    console.error("Error fetching billing details:", error);
+    throw new Error("Failed to fetch billing details.");
+  }
 };
 
 router.get("/billingdata", async function (req, res) {
   try {
     const result = await fetchBillingDetails();
-
-    res.status(result.statusCode).json({ result });
+    res.status(result.statusCode).json({
+      statusCode: result.statusCode,
+      message: result.message,
+      data: result.data,
+      totalCount: result.totalCount,
+    });
   } catch (error) {
-    console.error(error.message);
+    console.error("Error in billing data route:", error.message);
     res.status(500).json({
       statusCode: 500,
       message: "Something went wrong, please try again later.",
     });
   }
 });
+
 
 const fetchBillingPopup = async (BillingId) => {
   const matchBillingId = {

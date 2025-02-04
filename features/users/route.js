@@ -190,12 +190,13 @@ const getAllUsers = async () => {
     const Users = await Signup.aggregate([
       {
         $match: {
-          IsDelete: false, // Only include users where IsDelete is false
+          IsDelete: false, 
         },
       },
       {
         $project: {
-          UserId: 1,  
+          UserId: 1,
+          Image: 1,
           Salutation: 1,
           FirstName: 1,
           LastName: 1,
@@ -222,6 +223,8 @@ const getAllUsers = async () => {
       },
     ]);
 
+    // console.log(Users, "Users");
+
     if (Users.length === 0) {
       return {
         statusCode: 404,
@@ -229,14 +232,13 @@ const getAllUsers = async () => {
       };
     }
 
-    const usersCount = await signup.countDocuments({ IsDelete: false });
+    const usersCount = Users.length; 
 
     return {
       statusCode: 200,
       message: "Users retrieved successfully.",
       data: Users,
-      TotalConut: usersCount,
-
+      TotalCount: usersCount, // Returning the length of filtered users
     };
   } catch (error) {
     return {
@@ -246,6 +248,7 @@ const getAllUsers = async () => {
     };
   }
 };
+
 
 router.get("/all-users", async (req, res) => {
   try {
@@ -406,13 +409,13 @@ router.post("/login", async (req, res) => {
 
 const countDetails = async () => {
   try {
-    const signupCount = await Signup.countDocuments({ IsDelete: false});
+    const signupCount = await Signup.countDocuments({ IsDelete: false });
 
-    const billingCount = await Billing.countDocuments({ IsDelete: false});
+    const billingCount = await Billing.countDocuments({ IsDelete: false });
 
-    const usersCount = await userSchema.countDocuments();
+    const usersCount = await userSchema.countDocuments(); 
 
-    const addtoCarts = await addtocart.countDocuments({ IsDelete: false});
+    const addtoCarts = await addtocart.countDocuments({ IsDelete: false });
 
     return {
       statusCode: 200,

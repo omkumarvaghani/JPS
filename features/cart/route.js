@@ -5,14 +5,16 @@ const Cart = require("./model");
 
 const router = express.Router();
 
+
 const fetchCartDetails = async (UserId, SKU) => {
   if (!UserId) {
     throw new Error("UserId is required to fetch cart details.");
   }
 
-  const quoteSearchQuery = { UserId, IsDelete: false }; // Start with UserId
+  const quoteSearchQuery = { UserId, IsDelete: false, IsCheckout: false }; // Start with UserId
   if (SKU) quoteSearchQuery.SKU = SKU; // Add SKU if it's provided
 
+  // console.log("Search Query:", quoteSearchQuery);
 
   const quotes = await Cart.aggregate([
     { $match: quoteSearchQuery },
@@ -37,11 +39,16 @@ const fetchCartDetails = async (UserId, SKU) => {
     },
   ]);
 
+  const cartCount = quotes.length; 
+  console.log("quotes", cartCount);
+
+
   return {
     statusCode: quotes.length > 0 ? 200 : 204,
     message:
       quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
     data: quotes,
+    TotalCount: cartCount,
   };
 };
 
@@ -62,6 +69,7 @@ router.get("/cart", async function (req, res) {
       statusCode: result.statusCode,
       message: result.message,
       data: result.data,
+      TotalCount: result.TotalCount,
     });
   } catch (error) {
     console.error("Error fetching cart details:", error.message);
@@ -76,6 +84,7 @@ router.get("/cart", async function (req, res) {
 const fetchCartWithoutCheckout = async () => {
   const quoteSearchQuery = { IsDelete: false, IsCheckout: false }; // Start with UserId// Add SKU if it's provided
 
+  // console.log("Search Query:", quoteSearchQuery);
 
   const quotes = await Cart.aggregate([
     { $match: quoteSearchQuery },
@@ -113,23 +122,24 @@ const fetchCartWithoutCheckout = async () => {
     },
   ]);
 
-  const usersCount = await Cart.countDocuments({ IsDelete: false, IsCheckout: false });
-
   return {
     statusCode: quotes.length > 0 ? 200 : 204,
     message:
       quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
     data: quotes,
-
-    TotalConut: usersCount,
   };
 };
 
 router.get("/cartwithoutcheckout", async function (req, res) {
   try {
+
     const result = await fetchCartWithoutCheckout();
 
-    res.status(result.statusCode).json({result});
+    res.status(result.statusCode).json({
+      statusCode: result.statusCode,
+      message: result.message,
+      data: result.data,
+    });
   } catch (error) {
     console.error("Error fetching cart details:", error.message);
     res.status(500).json({
@@ -146,14 +156,12 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
       throw new Error("AddToCartId is required.");
     }
 
-    const quoteSearchQuery = {
-      AddToCartId,
-      IsDelete: false,
-      IsCheckout: false,
-    };
+    const quoteSearchQuery = { AddToCartId, IsDelete: false, IsCheckout: false };
+    // console.log("Search Query:", JSON.stringify(quoteSearchQuery, null, 2));
 
     // Fetch raw cart data before aggregation for debugging
     const rawCartData = await Cart.find(quoteSearchQuery);
+    // console.log("Raw Cart Data:", rawCartData);
 
     if (rawCartData.length === 0) {
       return {
@@ -201,11 +209,11 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
       },
     ]);
 
+    // console.log("Final Quotes Data:", quotes);
 
     return {
       statusCode: quotes.length > 0 ? 200 : 204,
-      message:
-        quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
+      message: quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
       data: quotes,
     };
   } catch (error) {
@@ -248,6 +256,7 @@ const addToCart = async (data, UserId) => {
     data["createdAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
     data["updatedAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
 
+    // console.log(data, "data");
 
     if (!data.AddToCartId) {
       data.AddToCartId = Date.now().toString(); // You can also prepend a prefix or make this more complex if needed
@@ -260,20 +269,14 @@ const addToCart = async (data, UserId) => {
       IsDelete: false,
     });
 
+    // console.log(existingItem, "existingItem");
 
     if (existingItem) {
-      // Update the quantity if the item already exists
-      const updatedItem = await Cart.findOneAndUpdate(
-        { UserId: existingItem.UserId, SKU: data.SKU }, // Find the item by UserId and SKU
-        { $inc: { Quantity: data.Quantity } }, // Increment the quantity
-        { new: true } // Return the updated document
-      );
 
 
       return {
         statusCode: 200,
-        data: updatedItem,
-        message: "Item quantity updated in the cart",
+        message: "Item already in the cart",
       };
     } else {
       // If the item does not exist, create a new cart entry
@@ -296,12 +299,14 @@ const addToCart = async (data, UserId) => {
 };
 
 router.post("/addtocart", async (req, res) => {
+  // console.log(req.body, "req.body");
   // const token = req.headers["authorization"]?.split(" ")[1];
   // if (!token) {
   //   return res.status(401).json({ message: "Unauthorized" });
   // }
   try {
     const UserId = req.body.UserId;
+    // console.log(UserId, "11111");
     // const decoded = jwt.verify(token, "your_secret_key");
     // req.body.UserId = decoded.Userid;
     const response = await addToCart(req.body, UserId);
@@ -319,7 +324,7 @@ const orderDetails = async () => {
   const orders = await Cart.aggregate([
     {
       $match: {
-        IsDelete: false,
+        IsDelete: false, 
       },
     },
     {
@@ -355,14 +360,23 @@ const orderDetails = async () => {
     },
   ]);
 
-  const cartCount = orders.length;
+  if (orders.length === 0) {
+    return {
+      statusCode: 404,
+      message: "No users found.",
+    };
+  }
+
+  const cartCount = orders.length; 
+  // console.log("orders", cartCount);
+
 
   return {
+    TotalCount: cartCount,
     statusCode: orders.length > 0 ? 200 : 204,
     message:
       orders.length > 0 ? "orders retrieved successfully" : "No orders found",
     data: orders,
-    totalCount: cartCount,
   };
 };
 
@@ -370,7 +384,7 @@ router.get("/orderdetail", async function (req, res) {
   try {
     const result = await orderDetails();
 
-    res.status(result.statusCode).json({ result });
+    res.status(result.statusCode).json({result});
   } catch (error) {
     console.error(error.message);
     res.status(500).json({

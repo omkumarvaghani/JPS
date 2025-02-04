@@ -141,15 +141,15 @@ const fetchQuoteDetails = async () => {
     },
   ]);
 
-  const stockCount = quotes.length;
-    // const usersCount = await userSchema.countDocuments();
-  
+  const stockCount = quotes.length; 
+
+
   return {
     statusCode: quotes.length > 0 ? 200 : 204,
     message:
       quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
     data: quotes,
-    TotalConut: stockCount,
+    TotalCount: stockCount
   };
 };
 
@@ -158,12 +158,100 @@ router.get("/data", async function (req, res) {
     const result = await fetchQuoteDetails();
 
     if (result.statusCode === 200) {
-      result.data.forEach((quote) => {
+      result.data.forEach((diamond) => {
+        // Add certificate URL
         const certificateUrl = getCertificateUrl(
-          quote.Lab,
-          quote.CertificateNo
+          diamond.Lab,
+          diamond.CertificateNo
         );
-        quote.certificateUrl = certificateUrl;
+        diamond.certificateUrl = certificateUrl;
+
+        // Add default image URL based on the shape
+        const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
+        diamond.Image =
+          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
+      });
+    }
+
+    res.status(result.statusCode).json({result});
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+const fetchcaratsDetails = async () => {
+  const quotes = await userSchema.aggregate([
+    {
+      $match: {
+        Carats: 1.32, // Filter to get only Carats = 1.32
+      },
+    },
+    {
+      $project: {
+        Image: 1,
+        Video: 1,
+        DiamondType: 1,
+        HA: 1,
+        Ratio: 1,
+        Tinge: 1,
+        Milky: 1,
+        EyeC: 1,
+        Table: 1,
+        Depth: 1,
+        measurements: 1,
+        Amount: 1,
+        Price: 1,
+        Disc: 1,
+        Rap: 1,
+        FluoInt: 1,
+        Symm: 1,
+        Polish: 1,
+        Cut: 1,
+        Clarity: 1,
+        Color: 1,
+        Carats: 1,
+        Shape: 1,
+        CertificateNo: 1,
+        Lab: 1,
+        SKU: 1,
+        SrNo: 1,
+      },
+    },
+  ]);
+
+  const stockCount = quotes.length;
+
+  return {
+    statusCode: quotes.length > 0 ? 200 : 204,
+    message:
+      quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
+    data: quotes,
+    TotalCount: stockCount,
+  };
+};
+
+
+router.get("/caretdata", async function (req, res) {
+  try {
+    const result = await fetchcaratsDetails();
+
+    if (result.statusCode === 200) {
+      result.data.forEach((diamond) => {
+        // Add certificate URL
+        const certificateUrl = getCertificateUrl(
+          diamond.Lab,
+          diamond.CertificateNo
+        );
+        diamond.certificateUrl = certificateUrl;
+
+        // Add default image URL based on the shape
+        const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
+        diamond.Image =
+          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
       });
     }
 
@@ -274,6 +362,7 @@ const fetchDaimondDetails = async (SkuId) => {
         SrNo: 1,
       },
     },
+    
   ]);
 
   return {

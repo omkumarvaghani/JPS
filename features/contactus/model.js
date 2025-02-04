@@ -5,8 +5,8 @@ const signupSchema = new mongoose.Schema(
     ContactId: { type: String },
     Name: { type: String },
     Email: { type: String },
-    Subject: { type: Number },
-    Message: { type: Number },
+    Subject: { type: String },
+    Message: { type: String },
     IsDelete: { type: Boolean, default: false },
   },
   {

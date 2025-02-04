@@ -83,6 +83,7 @@ router.post("/register-superadmin", async (req, res) => {
 const superadminLogin = async (data) => {
   try {
     const { EmailAddress, Password } = data;
+    // console.log(data);
     // Validate input
     if (!EmailAddress || !Password) {
       return {
