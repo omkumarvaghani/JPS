@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
     Lab: { type: String },
     SKU: { type: String },
     SrNo: { type: String },
+    IsDelete: { type: Boolean, default: false }, 
   },
   {
     timestamps: true,

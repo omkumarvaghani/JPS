@@ -109,6 +109,9 @@ function getCertificateUrl(lab, certificateNo) {
 const fetchQuoteDetails = async () => {
   const quotes = await userSchema.aggregate([
     {
+      $match: { IsDelete: false },
+    },
+    {
       $project: {
         Image: 1,
         Video: 1,
@@ -141,15 +144,14 @@ const fetchQuoteDetails = async () => {
     },
   ]);
 
-  const stockCount = quotes.length; 
-
+  const stockCount = quotes.length;
 
   return {
     statusCode: quotes.length > 0 ? 200 : 204,
     message:
       quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
     data: quotes,
-    TotalCount: stockCount
+    TotalCount: stockCount,
   };
 };
 
@@ -169,11 +171,13 @@ router.get("/data", async function (req, res) {
         // Add default image URL based on the shape
         const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
         diamond.Image =
-          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
+          diamond.Image && diamond.Image.length > 0
+            ? diamond.Image
+            : defaultImageUrl;
       });
     }
 
-    res.status(result.statusCode).json({result});
+    res.status(result.statusCode).json({ result });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
@@ -234,7 +238,6 @@ const fetchcaratsDetails = async () => {
   };
 };
 
-
 router.get("/caretdata", async function (req, res) {
   try {
     const result = await fetchcaratsDetails();
@@ -251,11 +254,13 @@ router.get("/caretdata", async function (req, res) {
         // Add default image URL based on the shape
         const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
         diamond.Image =
-          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
+          diamond.Image && diamond.Image.length > 0
+            ? diamond.Image
+            : defaultImageUrl;
       });
     }
 
-    res.status(result.statusCode).json({result});
+    res.status(result.statusCode).json({ result });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
@@ -362,13 +367,14 @@ const fetchDaimondDetails = async (SkuId) => {
         SrNo: 1,
       },
     },
-    
   ]);
 
   return {
     statusCode: diamonds.length > 0 ? 200 : 204,
     message:
-      diamonds.length > 0 ? "diamonds retrieved successfully" : "No diamonds found",
+      diamonds.length > 0
+        ? "diamonds retrieved successfully"
+        : "No diamonds found",
     data: diamonds,
   };
 };
@@ -390,7 +396,9 @@ router.get("/data/:SkuId", async function (req, res) {
         // Add default image URL based on the shape
         const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
         diamond.Image =
-          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
+          diamond.Image && diamond.Image.length > 0
+            ? diamond.Image
+            : defaultImageUrl;
       });
     }
 
@@ -425,7 +433,9 @@ router.get("/stockpopup", async function (req, res) {
         // Add default image URL based on the shape
         const defaultImageUrl = getDefaultImageUrl(diamond.Shape);
         diamond.Image =
-          diamond.Image && diamond.Image.length > 0 ? diamond.Image : defaultImageUrl;
+          diamond.Image && diamond.Image.length > 0
+            ? diamond.Image
+            : defaultImageUrl;
       });
     }
 
@@ -439,6 +449,48 @@ router.get("/stockpopup", async function (req, res) {
     res.status(500).json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+const deletestock = async (SKU) => {
+  try {
+    const updatestock = await userSchema.findOneAndUpdate(
+      { SKU },
+      { $set: { IsDelete: true } },
+      { new: true }
+    );
+
+    if (!updatestock) {
+      return {
+        statusCode: 404,
+        message: `No user found`,
+      };
+    }
+    return {
+      statusCode: 200,
+      message: `User deleted successfully.`,
+      data: updatestock,
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      message: "Failed to soft delete user data.",
+      error: error.message,
+    };
+  }
+};
+
+router.delete("/deletestock/:SKU", async (req, res) => {
+  try {
+    const { SKU } = req.params;
+    const response = await deletestock(SKU);
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Something went wrong, please try later!",
     });
   }
 });

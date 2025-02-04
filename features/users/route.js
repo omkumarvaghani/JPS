@@ -190,7 +190,7 @@ const getAllUsers = async () => {
     const Users = await Signup.aggregate([
       {
         $match: {
-          IsDelete: false, 
+          IsDelete: false,
         },
       },
       {
@@ -223,8 +223,6 @@ const getAllUsers = async () => {
       },
     ]);
 
-    // console.log(Users, "Users");
-
     if (Users.length === 0) {
       return {
         statusCode: 404,
@@ -232,8 +230,7 @@ const getAllUsers = async () => {
       };
     }
 
-    const usersCount = Users.length; 
-
+    const usersCount = Users.length;
     return {
       statusCode: 200,
       message: "Users retrieved successfully.",
@@ -248,7 +245,6 @@ const getAllUsers = async () => {
     };
   }
 };
-
 
 router.get("/all-users", async (req, res) => {
   try {
@@ -327,7 +323,7 @@ router.get("/userpopup", async function (req, res) {
     // res.setHeader("Pragma", "no-cache");
     // res.setHeader("Expires", "0");
     // res.setHeader("Surrogate-Control", "no-store");
-    
+
     res.status(result.statusCode).json({
       statusCode: 200,
       message: result.message,
@@ -413,9 +409,12 @@ const countDetails = async () => {
 
     const billingCount = await Billing.countDocuments({ IsDelete: false });
 
-    const usersCount = await userSchema.countDocuments(); 
+    const usersCount = await userSchema.countDocuments({ IsDelete: false,});
 
-    const addtoCarts = await addtocart.countDocuments({ IsDelete: false });
+    const addtoCarts = await addtocart.countDocuments({
+      IsDelete: false,
+      IsCheckout: false,
+    });
 
     return {
       statusCode: 200,
@@ -450,6 +449,48 @@ router.get("/countdata", async function (req, res) {
     res.status(500).json({
       statusCode: 500,
       message: "Something went wrong, please try again later.",
+    });
+  }
+});
+
+const deleteuserdata = async (UserId) => {
+  try {
+    const updateuser = await signup.findOneAndUpdate(
+      { UserId },
+      { $set: { IsDelete: true } },
+      { new: true }
+    );
+
+    if (!updateuser) {
+      return {
+        statusCode: 404,
+        message: `No user found`,
+      };
+    }
+    return {
+      statusCode: 200,
+      message: `User deleted successfully.`,
+      data: updateuser,
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      message: "Failed to soft delete user data.",
+      error: error.message,
+    };
+  }
+};
+
+router.delete("/updateuser/:UserId", async (req, res) => {
+  try {
+    const { UserId } = req.params;
+    const response = await deleteuserdata(UserId);
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Something went wrong, please try later!",
     });
   }
 });

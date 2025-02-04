@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 const SECRET_KEY = "your_secret_key";
 const Cart = require("../cart/model");
 const Contact = require("./model");
-const nodemailer = require("nodemailer")
+const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
@@ -24,37 +24,36 @@ let transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async (toEmail, subject, body) => {
-    try {
-      const mailOptions = {
-        from: "jpsjewels@gmail.com",
-        to: toEmail,
-        subject: subject,
-        html: body, // Sending HTML content
-      };
-  
-      await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully to:", toEmail);
-    } catch (error) {
-      console.error("Error sending email:", error.message);
+  try {
+    const mailOptions = {
+      from: "jpsjewels@gmail.com",
+      to: toEmail,
+      subject: subject,
+      html: body, // Sending HTML content
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending email:", error.message);
+  }
+};
+
+const addContact = async (data) => {
+  try {
+    const timestamp = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+    data.createdAt = timestamp;
+    data.updatedAt = timestamp;
+
+    // Save contact details
+    const newContact = await Contact.create(data);
+
+    // Ensure the contact email exists before sending an email
+    if (!data.Email) {
+      return { statusCode: 400, message: "Recipient email is required." };
     }
-  };
-  
-  const addContact = async (data) => {
-    try {
-      const timestamp = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
-      data.createdAt = timestamp;
-      data.updatedAt = timestamp;
-  
-      // Save contact details
-      const newContact = await Contact.create(data);
-  
-      // Ensure the contact email exists before sending an email
-      if (!data.Email) {
-        return { statusCode: 400, message: "Recipient email is required." };
-      }
-  
-      // Prepare email content
-      const emailBody = `
+
+    // Prepare email content
+    const emailBody = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -88,132 +87,175 @@ const sendEmail = async (toEmail, subject, body) => {
         </body>
         </html>
       `;
-  
-      // Send email
-      await sendEmail(data.Email, "We Received Your Contact Request!", emailBody);
-  
-      return {
-        statusCode: 200,
-        data: newContact,
-        message: "Contact details saved and email sent successfully.",
-      };
-    } catch (error) {
-      console.error("Error in addContact:", error.message);
-      return {
-        statusCode: 500,
-        message: "An error occurred while saving contact details.",
-        error: error.message,
-      };
-    }
-  };
-  
-  router.post("/addcontact", async (req, res) => {
-    try {
-      req.body.ContactId = Date.now(); // Generate a unique Contact ID
-      const response = await addContact(req.body);
-      res.status(response.statusCode).json(response);
-    } catch (error) {
-      console.error("Error:", error.message);
-      res.status(500).json({ message: "Something went wrong, please try later!" });
-    }
-  });
 
+    // Send email
+    await sendEmail(data.Email, "We Received Your Contact Request!", emailBody);
 
-  const contactDetails = async () => {
-    const contact = await Contact.aggregate([
-      {
-        $project: {
-          Email: 1,
-          Name: 1,
-          ContactId: 1,
-          Message: 1,
-          Subject: 1,
-        },
-      },
-    ]);
-  
-    const stockCount = contact.length;
-  
     return {
-      statusCode: stockCount > 0 ? 200 : 204,
-      message:
-        stockCount > 0 ? "Quotes retrieved successfully" : "No Contact found",
-      data: contact,
-      TotalCount: stockCount,
+      statusCode: 200,
+      data: newContact,
+      message: "Contact details saved and email sent successfully.",
     };
-  };
-  
-  router.get("/contactdetails", async (req, res) => {
-    try {
-      const response = await contactDetails();
-      res.status(response.statusCode).json(response);
-    } catch (error) {
-      console.error("Error:", error.message);
-      res
-        .status(500)
-        .json({ message: "Something went wrong, please try later!" });
-    }
-  });
-  
+  } catch (error) {
+    console.error("Error in addContact:", error.message);
+    return {
+      statusCode: 500,
+      message: "An error occurred while saving contact details.",
+      error: error.message,
+    };
+  }
+};
 
-  const contactDetailsPopup = async (ContactId) => {
-    if (!ContactId) {
-      throw new Error("AddToCartId is required.");
-    }
-  
-    const quoteSearchQuery = {
-      ContactId,
-      IsDelete: false,
+router.post("/addcontact", async (req, res) => {
+  try {
+    req.body.ContactId = Date.now(); // Generate a unique Contact ID
+    const response = await addContact(req.body);
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Something went wrong, please try later!" });
+  }
+});
+
+const contactDetails = async () => {
+  const contact = await Contact.aggregate([
+    {
+      $match: { IsDelete: false },
+    },
+    {
+      $project: {
+        Email: 1, 
+        Name: 1,
+        ContactId: 1,
+        Message: 1,
+        Subject: 1,
+      },
+    },
+  ]);
+
+  const stockCount = contact.length;
+
+  return {
+    statusCode: stockCount > 0 ? 200 : 204,
+    message:
+      stockCount > 0 ? "Quotes retrieved successfully" : "No Contact found",
+    data: contact,
+    TotalCount: stockCount,
+  };
+};
+
+router.get("/contactdetails", async (req, res) => {
+  try {
+    const response = await contactDetails();
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Something went wrong, please try later!" });
+  }
+});
+
+const contactDetailsPopup = async (ContactId) => {
+  if (!ContactId) {
+    throw new Error("AddToCartId is required.");
+  }
+
+  const quoteSearchQuery = {
+    ContactId,
+    IsDelete: false,
+  };
+
+  const rawCartData = await Contact.find(quoteSearchQuery);
+
+  if (rawCartData.length === 0) {
+    return {
+      statusCode: 204,
+      message: "No quotes found",
+      data: [],
     };
-  
-    const rawCartData = await Contact.find(quoteSearchQuery);
-  
-    if (rawCartData.length === 0) {
+  }
+
+  const contact = await Contact.aggregate([
+    { $match: quoteSearchQuery },
+    {
+      $project: {
+        Email: 1,
+        Name: 1,
+        ContactId: 1,
+        Message: 1,
+        Subject: 1,
+      },
+    },
+  ]);
+
+  const stockCount = contact.length;
+
+  return {
+    statusCode: stockCount > 0 ? 200 : 204,
+    message:
+      stockCount > 0 ? "Quotes retrieved successfully" : "No Contact found",
+    data: contact,
+    TotalCount: stockCount,
+  };
+};
+
+router.get("/contactdetailspopup", async (req, res) => {
+  try {
+    const { ContactId } = req.query;
+
+    const response = await contactDetailsPopup(ContactId);
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Something went wrong, please try later!" });
+  }
+});
+
+const deletecontact = async (ContactId) => {
+  try {
+    const deleteconta = await Contact.findOneAndUpdate(
+      { ContactId },
+      { $set: { IsDelete: true } },
+      { new: true }
+    );
+
+    if (!deleteconta) {
       return {
-        statusCode: 204,
-        message: "No quotes found",
-        data: [],
+        statusCode: 404,
+        message: `No user found`,
       };
     }
-  
-    const contact = await Contact.aggregate([
-      { $match: quoteSearchQuery },
-      {
-        $project: {
-          Email: 1,
-          Name: 1,
-          ContactId: 1,
-          Message: 1,
-          Subject: 1,
-        },
-      },
-    ]);
-  
-    const stockCount = contact.length;
-  
     return {
-      statusCode: stockCount > 0 ? 200 : 204,
-      message:
-        stockCount > 0 ? "Quotes retrieved successfully" : "No Contact found",
-      data: contact,
-      TotalCount: stockCount,
+      statusCode: 200,
+      message: `User deleted successfully.`,
+      data: deleteconta,
     };
-  };
-  
-  router.get("/contactdetailspopup", async (req, res) => {
-    try {
-      const { ContactId } = req.query;
-  
-      const response = await contactDetailsPopup(ContactId);
-      res.status(response.statusCode).json(response);
-    } catch (error) {
-      console.error("Error:", error.message);
-      res
-        .status(500)
-        .json({ message: "Something went wrong, please try later!" });
-    }
-  });
+  } catch (error) {
+    return {
+      statusCode: 500,
+      message: "Failed to soft delete user data.",
+      error: error.message,
+    };
+  }
+};
 
-
+router.delete("/updatecontact/:ContactId", async (req, res) => {
+  try {
+    const { ContactId } = req.params;
+    const response = await deletecontact(ContactId);
+    res.status(response.statusCode).json(response);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Something went wrong, please try later!",
+    });
+  }
+});
 
 module.exports = router;

@@ -23,7 +23,8 @@ const signupSchema = new mongoose.Schema(
     Lab: { type: String },
     Cut: { type: String },
     SKU: { type: String },
-    IsDelete:{ type: Boolean, default: false },
+    Video: { type: String },
+    IsDelete: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -31,7 +32,3 @@ const signupSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Billing", signupSchema);
-
-
-
-

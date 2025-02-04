@@ -81,12 +81,8 @@ router.post("/register-superadmin", async (req, res) => {
 });
 
 const superadminLogin = async (data) => {
-
-  console.log(data,"data")
   try {
     const { EmailAddress, Password } = data;
-    // console.log(data);
-    // Validate input
     if (!EmailAddress || !Password) {
       return {
         statusCode: 400,
@@ -135,7 +131,6 @@ const superadminLogin = async (data) => {
 };
 
 router.post("/superadminlogin", async (req, res) => {
-  console.log(req.body,"req.body")
   try {
     const response = await superadminLogin(req.body);
     res.status(response.statusCode).json(response);
