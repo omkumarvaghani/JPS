@@ -20,7 +20,7 @@ const fetchCartDetails = async (UserId, SKU) => {
     { $match: quoteSearchQuery },
     {
       $lookup: {
-        from: "users",
+        from:"stocks",
         localField: "SKU",
         foreignField: "SKU",
         as: "diamondDetails",
@@ -90,7 +90,7 @@ const fetchCartWithoutCheckout = async () => {
     { $match: quoteSearchQuery },
     {
       $lookup: {
-        from: "users",
+        from:"stocks",
         localField: "SKU",
         foreignField: "SKU",
         as: "diamondDetails",
@@ -176,7 +176,7 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
       { $match: quoteSearchQuery },
       {
         $lookup: {
-          from: "users",
+          from:"stocks",
           localField: "SKU",
           foreignField: "SKU",
           as: "diamondDetails",
@@ -337,7 +337,7 @@ const orderDetails = async () => {
     },
     {
       $lookup: {
-        from: "users",
+        from:"stocks",
         localField: "SKU",
         foreignField: "SKU",
         as: "diamondDetails",
