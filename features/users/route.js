@@ -219,6 +219,7 @@ const getAllUsers = async () => {
           PreferredContactMethod: 1,
           PreferredContactDetails: 1,
           IsDelete: 1,
+          createdAt: 1,
         },
       },
     ]);
@@ -409,7 +410,7 @@ const countDetails = async () => {
 
     const billingCount = await Billing.countDocuments({ IsDelete: false });
 
-    const usersCount = await userSchema.countDocuments({ IsDelete: false,});
+    const usersCount = await userSchema.countDocuments({ IsDelete: false });
 
     const addtoCarts = await addtocart.countDocuments({
       IsDelete: false,

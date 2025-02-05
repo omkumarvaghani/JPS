@@ -98,10 +98,21 @@ const fetchCartWithoutCheckout = async () => {
       },
     },
     {
+      $lookup: {
+        from: "addtocarts",
+        localField: "AddToCartId",
+        foreignField: "AddToCartId",
+        as: "addCartDetails",
+      },
+    },
+    {
       $unwind: { path: "$diamondDetails", preserveNullAndEmptyArrays: true },
     },
     {
       $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $unwind: { path: "$addCartDetails", preserveNullAndEmptyArrays: true },
     },
     {
       $project: {
@@ -111,6 +122,7 @@ const fetchCartWithoutCheckout = async () => {
         diamondDetails: 1,
         userDetails: 1,
         Quantity: 1,
+        addCartDetails: 1,
       },
     },
   ]);
@@ -192,10 +204,21 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
         },
       },
       {
+        $lookup: {
+          from: "addtocarts",
+          localField: "AddToCartId",
+          foreignField: "AddToCartId",
+          as: "addCartDetails",
+        },
+      },
+      {
         $unwind: { path: "$diamondDetails", preserveNullAndEmptyArrays: true },
       },
       {
         $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $unwind: { path: "$addCartDetails", preserveNullAndEmptyArrays: true },
       },
       {
         $project: {
@@ -206,6 +229,7 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
           Quantity: 1,
           diamondDetails: 1,
           userDetails: 1,
+          addCartDetails:1,
         },
       },
     ]);

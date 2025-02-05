@@ -131,6 +131,7 @@ const contactDetails = async () => {
         ContactId: 1,
         Message: 1,
         Subject: 1,
+        createdAt:1,
       },
     },
   ]);
@@ -187,6 +188,7 @@ const contactDetailsPopup = async (ContactId) => {
         ContactId: 1,
         Message: 1,
         Subject: 1,
+        createdAt:1,
       },
     },
   ]);

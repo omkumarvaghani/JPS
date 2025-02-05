@@ -79,18 +79,6 @@ const verifyLoginToken = async (req, res, next) => {
     req.Role = data.role;
     req.userName = data.full_name;
 
-    // // get user
-    // const user = await userService.findById(userId);
-
-    // check user is verified or not
-    // if (!user?.isVerified) {
-    //   return apiResponse({
-    //     res,
-    //     statusCode: StatusCodes.UNAUTHORIZED,
-    //     message: "Please verify your email",
-    //   });
-    // }
-
     next();
   } catch (error) {
     console.error(error);

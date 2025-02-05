@@ -99,7 +99,6 @@ const superadminLogin = async (data) => {
       };
     }
 
-    // Compare the hashed password
     const isPasswordValid = await bcrypt.compare(Password, user.Password);
     if (!isPasswordValid) {
       return {
