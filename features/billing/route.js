@@ -104,7 +104,7 @@ const addBilling = async (data, UserId) => {
     // Fetch diamond details
     const diamDetails = await Promise.all(
       cartDetails.map(async (cartItem) => {
-        const diamond = await userSchema.findOne({ SKU: cartItem.SKU }).lean();
+        const diamond = await userSchema.findOne({ SKU: cartItem.SKU, IsDelte: false }).lean();
         return {
           ...cartItem,
           ...diamond,
@@ -267,6 +267,7 @@ const addBilling = async (data, UserId) => {
                       .map(
                         (item) => `
                         <li>
+                        Billing ID: <strong>${item.BillingId}</strong><br>
                           <strong>${item.Carats} Carat ${
                           item.Shape
                         } Diamond</strong><br>

@@ -84,6 +84,7 @@ const fetchCartWithoutCheckout = async () => {
     {
       $lookup: {
         from: "stocks",
+        pipeline: [{ $match: { IsDelete: false } }],
         localField: "SKU",
         foreignField: "SKU",
         as: "diamondDetails",
@@ -293,7 +294,7 @@ const addToCart = async (data, UserId) => {
 
     if (existingItem) {
       return {
-        statusCode: 200,
+        statusCode: 202,
         message: "Item already in the cart",
       };
     } else {
