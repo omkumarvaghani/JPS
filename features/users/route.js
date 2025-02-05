@@ -136,6 +136,7 @@ const getUser = async (UserId, req) => {
   try {
     const UsernameExists = {
       UserId: UserId,
+      IsDelete: false,
     };
 
     if (!UsernameExists) {
@@ -343,7 +344,7 @@ const loginUser = async (data) => {
 
   try {
     // Check if the user exists
-    const user = await Signup.findOne({ Username });
+    const user = await Signup.findOne({ Username, IsDelete: false });
     if (!user) {
       return {
         statusCode: 404,

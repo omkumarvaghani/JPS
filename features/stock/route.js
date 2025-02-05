@@ -191,7 +191,8 @@ const fetchcaratsDetails = async () => {
   const quotes = await userSchema.aggregate([
     {
       $match: {
-        Carats: 1.32, // Filter to get only Carats = 1.32
+        Carats: 1.32,
+        IsDelete: false, // Filter to get only Carats = 1.32
       },
     },
     {
@@ -332,6 +333,7 @@ function getDefaultImageUrl(Shape) {
 const fetchDaimondDetails = async (SkuId) => {
   const diamondSearchQuery = {
     SKU: SkuId,
+    IsDelete: false,
   };
 
   const diamonds = await userSchema.aggregate([
