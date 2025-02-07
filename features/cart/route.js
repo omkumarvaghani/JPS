@@ -4,6 +4,7 @@ const moment = require("moment");
 const Cart = require("./model");
 
 const router = express.Router();
+const { verifyLoginToken } = require("../authentication/authentication");
 
 const fetchCartDetails = async (UserId, SKU) => {
   if (!UserId) {
@@ -47,7 +48,7 @@ const fetchCartDetails = async (UserId, SKU) => {
   };
 };
 
-router.get("/cart", async function (req, res) {
+router.get("/cart",verifyLoginToken, async function (req, res) {
   try {
     const { userId, SKU } = req.query;
 
@@ -142,7 +143,7 @@ const fetchCartWithoutCheckout = async () => {
   };
 };
 
-router.get("/cartwithoutcheckout", async function (req, res) {
+router.get("/cartwithoutcheckout",verifyLoginToken, async function (req, res) {
   try {
     const result = await fetchCartWithoutCheckout();
 
@@ -230,7 +231,7 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
           Quantity: 1,
           diamondDetails: 1,
           userDetails: 1,
-          addCartDetails:1,
+          addCartDetails: 1,
         },
       },
     ]);
@@ -252,7 +253,7 @@ const fetchCartWithoutCheckoutPopup = async (AddToCartId) => {
 };
 
 // API Route
-router.get("/cartpopup", async function (req, res) {
+router.get("/cartpopup", verifyLoginToken,async function (req, res) {
   try {
     const { AddToCartId } = req.query;
 
@@ -317,7 +318,7 @@ const addToCart = async (data, UserId) => {
   }
 };
 
-router.post("/addtocart", async (req, res) => {
+router.post("/addtocart",verifyLoginToken, async (req, res) => {
   // const token = req.headers["authorization"]?.split(" ")[1];
   // if (!token) {
   //   return res.status(401).json({ message: "Unauthorized" });
@@ -395,7 +396,7 @@ const orderDetails = async () => {
   };
 };
 
-router.get("/orderdetail", async function (req, res) {
+router.get("/orderdetail", verifyLoginToken,async function (req, res) {
   try {
     const result = await orderDetails();
 
@@ -437,7 +438,7 @@ const deletecarddata = async (AddToCartId) => {
   }
 };
 
-router.delete("/updatecart/:AddToCartId", async (req, res) => {
+router.delete("/updatecart/:AddToCartId",verifyLoginToken, async (req, res) => {
   try {
     const { AddToCartId } = req.params;
     const response = await deletecarddata(AddToCartId);

@@ -10,6 +10,7 @@ const SECRET_KEY = "your_secret_key";
 const Cart = require("../cart/model");
 const Contact = require("./model");
 const nodemailer = require("nodemailer");
+const { verifyLoginToken } = require("../authentication/authentication");
 
 const router = express.Router();
 
@@ -106,7 +107,7 @@ const addContact = async (data) => {
   }
 };
 
-router.post("/addcontact", async (req, res) => {
+router.post("/addcontact", verifyLoginToken, async (req, res) => {
   try {
     req.body.ContactId = Date.now(); // Generate a unique Contact ID
     const response = await addContact(req.body);
@@ -126,12 +127,12 @@ const contactDetails = async () => {
     },
     {
       $project: {
-        Email: 1, 
+        Email: 1,
         Name: 1,
         ContactId: 1,
         Message: 1,
         Subject: 1,
-        createdAt:1,
+        createdAt: 1,
       },
     },
   ]);
@@ -188,7 +189,7 @@ const contactDetailsPopup = async (ContactId) => {
         ContactId: 1,
         Message: 1,
         Subject: 1,
-        createdAt:1,
+        createdAt: 1,
       },
     },
   ]);
@@ -204,7 +205,7 @@ const contactDetailsPopup = async (ContactId) => {
   };
 };
 
-router.get("/contactdetailspopup", async (req, res) => {
+router.get("/contactdetailspopup", verifyLoginToken, async (req, res) => {
   try {
     const { ContactId } = req.query;
 
@@ -246,18 +247,22 @@ const deletecontact = async (ContactId) => {
   }
 };
 
-router.delete("/updatecontact/:ContactId", async (req, res) => {
-  try {
-    const { ContactId } = req.params;
-    const response = await deletecontact(ContactId);
-    res.status(response.statusCode).json(response);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      statusCode: 500,
-      message: "Something went wrong, please try later!",
-    });
+router.delete(
+  "/updatecontact/:ContactId",
+  verifyLoginToken,
+  async (req, res) => {
+    try {
+      const { ContactId } = req.params;
+      const response = await deletecontact(ContactId);
+      res.status(response.statusCode).json(response);
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).json({
+        statusCode: 500,
+        message: "Something went wrong, please try later!",
+      });
+    }
   }
-});
+);
 
 module.exports = router;

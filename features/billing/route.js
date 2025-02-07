@@ -13,6 +13,7 @@ const Billing = require("./model");
 const nodemailer = require("nodemailer");
 const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
+const { verifyLoginToken } = require("../authentication/authentication");
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -44,6 +45,7 @@ const deltebillingdata = async (BillingId) => {
       data: updatebilling,
     };
   } catch (error) {
+    F;
     return {
       statusCode: 500,
       message: "Failed to soft delete user data.",
@@ -52,19 +54,23 @@ const deltebillingdata = async (BillingId) => {
   }
 };
 
-router.delete("/deletebilingdata/:BillingId", async (req, res) => {
-  try {
-    const { BillingId } = req.params;
-    const response = await deltebillingdata(BillingId);
-    res.status(response.statusCode).json(response);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      statusCode: 500,
-      message: "Something went wrong, please try later!",
-    });
+router.delete(
+  "/deletebilingdata/:BillingId",
+  verifyLoginToken,
+  async (req, res) => {
+    try {
+      const { BillingId } = req.params;
+      const response = await deltebillingdata(BillingId);
+      res.status(response.statusCode).json(response);
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).json({
+        statusCode: 500,
+        message: "Something went wrong, please try later!",
+      });
+    }
   }
-});
+);
 
 const sendEmail = async (toEmail, subject, body) => {
   try {
@@ -104,7 +110,9 @@ const addBilling = async (data, UserId) => {
     // Fetch diamond details
     const diamDetails = await Promise.all(
       cartDetails.map(async (cartItem) => {
-        const diamond = await userSchema.findOne({ SKU: cartItem.SKU, IsDelte: false }).lean();
+        const diamond = await userSchema
+          .findOne({ SKU: cartItem.SKU, IsDelte: false })
+          .lean();
         return {
           ...cartItem,
           ...diamond,
@@ -304,8 +312,8 @@ const addBilling = async (data, UserId) => {
     );
 
     const updateCheckoutStatus = await Cart.updateMany(
-      { UserId, IsCheckout: false, IsDelete: false }, // Conditions
-      { $set: { IsCheckout: true, IsDelete: true } } // Update fields
+      { UserId, IsCheckout: false, IsDelete: false },
+      { $set: { IsCheckout: true, IsDelete: true } }
     );
 
     return {
@@ -323,9 +331,8 @@ const addBilling = async (data, UserId) => {
   }
 };
 
-router.post("/addbilling", async (req, res) => {
+router.post("/addbilling", verifyLoginToken, async (req, res) => {
   try {
-
     // Generate a unique Billing ID
     req.body.BillingId = Date.now();
 
@@ -400,7 +407,7 @@ const fetchBillingDetails = async () => {
   }
 };
 
-router.get("/billingdata", async function (req, res) {
+router.get("/billingdata", verifyLoginToken, async function (req, res) {
   try {
     const result = await fetchBillingDetails();
     res.status(result.statusCode).json({
@@ -477,7 +484,7 @@ const fetchBillingPopup = async (BillingId) => {
   };
 };
 
-router.get("/billingpopup", async function (req, res) {
+router.get("/billingpopup", verifyLoginToken, async function (req, res) {
   try {
     const { BillingId } = req.query;
     const result = await fetchBillingPopup(BillingId);

@@ -4,10 +4,11 @@ const Signup = require("./model");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = "your_secret_key";
+const SECRET_KEY = process.env.SECRET_KEY;
 const Billing = require("../billing/model");
 const addtocart = require("../cart/model");
 const signup = require("./model");
+const { verifyLoginToken } = require("../authentication/authentication");
 
 const router = express.Router();
 
@@ -172,7 +173,7 @@ const getUser = async (UserId, req) => {
   }
 };
 
-router.get("/userdata", async (req, res) => {
+router.get("/userdata", verifyLoginToken, async (req, res) => {
   try {
     const { UserId } = req.query;
     const response = await getUser(UserId);
@@ -248,7 +249,7 @@ const getAllUsers = async () => {
   }
 };
 
-router.get("/all-users", async (req, res) => {
+router.get("/all-users", verifyLoginToken, async (req, res) => {
   try {
     const response = await getAllUsers();
     res.status(response.statusCode).json(response);
@@ -313,7 +314,7 @@ const fetchUserPopup = async (UserId) => {
   };
 };
 
-router.get("/userpopup", async function (req, res) {
+router.get("/userpopup", verifyLoginToken, async function (req, res) {
   try {
     const { UserId } = req.query;
     const result = await fetchUserPopup(UserId);
@@ -353,11 +354,10 @@ const loginUser = async (data) => {
       };
     }
 
+    consle.log(user, UserPassword);
+
     // Validate the password
-    const isPasswordValid = await bcrypt.compare(
-      UserPassword,
-      user.UserPassword
-    );
+    const isPasswordValid = bcrypt.compare(UserPassword, user.UserPassword);
     if (!isPasswordValid) {
       return {
         statusCode: 401,
@@ -392,7 +392,7 @@ const loginUser = async (data) => {
   }
 };
 
-router.post("/login", async (req, res) => {
+router.post("/login", verifyLoginToken, async (req, res) => {
   try {
     const response = await loginUser(req.body);
     res.status(response.statusCode).json(response);
@@ -438,7 +438,7 @@ const countDetails = async () => {
   }
 };
 
-router.get("/countdata", async function (req, res) {
+router.get("/countdata", verifyLoginToken, async function (req, res) {
   try {
     const result = await countDetails();
     res.status(result.statusCode).json({
@@ -483,7 +483,7 @@ const deleteuserdata = async (UserId) => {
   }
 };
 
-router.delete("/updateuser/:UserId", async (req, res) => {
+router.delete("/updateuser/:UserId", verifyLoginToken, async (req, res) => {
   try {
     const { UserId } = req.params;
     const response = await deleteuserdata(UserId);

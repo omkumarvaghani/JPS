@@ -4,8 +4,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Superadmin = require("./model");
 const moment = require("moment");
-const SECRET_KEY = "akjcjckcjjcknsjcksckanckjkasnksc";
-
+const SECRET_KEY = process.env.SECRET_KEY;
+const { verifyLoginToken } = require("../authentication/authentication");
 // Function to register a super admin
 const registerSuperadmin = async (data) => {
   try {
@@ -83,6 +83,8 @@ router.post("/register-superadmin", async (req, res) => {
 const superadminLogin = async (data) => {
   try {
     const { EmailAddress, Password } = data;
+
+    // Validate inputs
     if (!EmailAddress || !Password) {
       return {
         statusCode: 400,
@@ -99,7 +101,9 @@ const superadminLogin = async (data) => {
       };
     }
 
-    const isPasswordValid = await bcrypt.compare(Password, user.Password);
+    console.log(user, Password);
+    // Check if the password is valid
+    const isPasswordValid = bcrypt.compare(Password, user.Password);
     if (!isPasswordValid) {
       return {
         statusCode: 401,
@@ -107,18 +111,19 @@ const superadminLogin = async (data) => {
       };
     }
 
-    // Generate a token
+    // Generate a JWT token
     const token = jwt.sign(
-      { SuperadminId: user.SuperadminId }, // Payload
+      { SuperadminId: user.SuperadminId }, // Payload with SuperadminId
       SECRET_KEY, // Secret key
-      { expiresIn: "1h" } // Token expiration time (1 hour)
+      { expiresIn: "1h" } // Token expiration (1 hour)
     );
 
-    // Return success response with token
+    // Return a successful response with the token and user details
     return {
       statusCode: 200,
       message: "Login successful",
-      token: token, // Send the generated token
+      token: token,
+      superadminId: user.SuperadminId,
     };
   } catch (error) {
     return {

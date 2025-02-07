@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const XLSX = require("xlsx");
 const userSchema = require("./model");
+const { verifyLoginToken } = require("../authentication/authentication");
 
 const router = express.Router();
 
@@ -155,7 +156,7 @@ const fetchQuoteDetails = async () => {
   };
 };
 
-router.get("/data", async function (req, res) {
+router.get("/data", verifyLoginToken, async function (req, res) {
   try {
     const result = await fetchQuoteDetails();
 
@@ -239,7 +240,7 @@ const fetchcaratsDetails = async () => {
   };
 };
 
-router.get("/caretdata", async function (req, res) {
+router.get("/caretdata", verifyLoginToken, async function (req, res) {
   try {
     const result = await fetchcaratsDetails();
 
@@ -381,7 +382,7 @@ const fetchDaimondDetails = async (SkuId) => {
   };
 };
 
-router.get("/data/:SkuId", async function (req, res) {
+router.get("/data/:SkuId", verifyLoginToken, async function (req, res) {
   try {
     const { SkuId } = req.params;
     const result = await fetchDaimondDetails(SkuId);
@@ -418,7 +419,7 @@ router.get("/data/:SkuId", async function (req, res) {
   }
 });
 
-router.get("/stockpopup", async function (req, res) {
+router.get("/stockpopup", verifyLoginToken, async function (req, res) {
   try {
     const { SkuId } = req.query;
     const result = await fetchDaimondDetails(SkuId);
@@ -483,7 +484,7 @@ const deletestock = async (SKU) => {
   }
 };
 
-router.delete("/deletestock/:SKU", async (req, res) => {
+router.delete("/deletestock/:SKU", verifyLoginToken, async (req, res) => {
   try {
     const { SKU } = req.params;
     const response = await deletestock(SKU);
