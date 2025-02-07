@@ -6,7 +6,6 @@ const Superadmin = require("./model");
 const moment = require("moment");
 const SECRET_KEY = process.env.SECRET_KEY;
 const { verifyLoginToken } = require("../authentication/authentication");
-// Function to register a super admin
 const registerSuperadmin = async (data) => {
   try {
     const SuperadminId = Date.now();
@@ -101,7 +100,6 @@ const superadminLogin = async (data) => {
       };
     }
 
-    console.log(user, Password);
     // Check if the password is valid
     const isPasswordValid = bcrypt.compare(Password, user.Password);
     if (!isPasswordValid) {

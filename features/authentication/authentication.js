@@ -46,7 +46,6 @@ const verifyLoginToken = async (req, res, next) => {
 
     const data = verifyToken(token);
 
-    console.log("Decoded Token:", data.SuperadminId, id);
     if (!data) {
       return res.status(401).json({
         statusCode: 401,

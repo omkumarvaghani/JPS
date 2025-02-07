@@ -1,5 +1,4 @@
 var express = require("express");
-const mongoose = require("mongoose");
 const multer = require("multer");
 const XLSX = require("xlsx");
 const userSchema = require("./model");
@@ -18,65 +17,70 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post("/students", upload.single("file"), async (req, res) => {
-  try {
-    // data["createdAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
-    // data["updatedAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+router.post(
+  "/students",
+  verifyLoginToken,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      // data["createdAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+      // data["updatedAt"] = moment().utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
 
-    const fileName = req.file.filename;
-    const fileData = `./${fileName}`;
-    const workbook = XLSX.readFile(fileData);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const fileName = req.file.filename;
+      const fileData = `./${fileName}`;
+      const workbook = XLSX.readFile(fileData);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-    for (const data of jsonData) {
-      await userSchema.findOneAndUpdate(
-        { SKU: data.SKU },
-        {
-          Image: data.Image,
-          Video: data.Video,
-          DiamondType: data["Diamond Type"],
-          HA: data["H&A"],
-          Ratio: data.Ratio,
-          Tinge: data.Tinge,
-          Milky: data.Milky,
-          EyeC: data.EyeC,
-          Table: data["Table(%)"],
-          Depth: data["Depth(%)"],
-          measurements: data.measurements,
-          Amount: data["Amount U$"],
-          Price: data["Price $/ct"],
-          Disc: data["Disc %"],
-          Rap: data["Rap $"],
-          FluoInt: data["Fluo Int"],
-          Symm: data.Symm,
-          Polish: data.Polish,
-          Cut: data.Cut,
-          Clarity: data.Clarity,
-          Color: data.Color,
-          Carats: data.Carats,
-          Shape: data.Shape,
-          CertificateNo: data["Certificate No"],
-          Lab: data.Lab,
-          SKU: data.SKU,
-          SrNo: data["Sr.No"],
-        },
-        { upsert: true, new: true }
-      );
+      for (const data of jsonData) {
+        await userSchema.findOneAndUpdate(
+          { SKU: data.SKU },
+          {
+            Image: data.Image,
+            Video: data.Video,
+            DiamondType: data["Diamond Type"],
+            HA: data["H&A"],
+            Ratio: data.Ratio,
+            Tinge: data.Tinge,
+            Milky: data.Milky,
+            EyeC: data.EyeC,
+            Table: data["Table(%)"],
+            Depth: data["Depth(%)"],
+            measurements: data.measurements,
+            Amount: data["Amount U$"],
+            Price: data["Price $/ct"],
+            Disc: data["Disc %"],
+            Rap: data["Rap $"],
+            FluoInt: data["Fluo Int"],
+            Symm: data.Symm,
+            Polish: data.Polish,
+            Cut: data.Cut,
+            Clarity: data.Clarity,
+            Color: data.Color,
+            Carats: data.Carats,
+            Shape: data.Shape,
+            CertificateNo: data["Certificate No"],
+            Lab: data.Lab,
+            SKU: data.SKU,
+            SrNo: data["Sr.No"],
+          },
+          { upsert: true, new: true }
+        );
+      }
+
+      res
+        .status(200)
+        .json({ success: true, message: "Excel file processed successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "An error occurred while processing the request",
+      });
     }
-
-    res
-      .status(200)
-      .json({ success: true, message: "Excel file processed successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while processing the request",
-    });
   }
-});
+);
 
 const labUrlMap = {
   HRD: "https://my.hrdantwerp.com/Download/GetGradingReportPdf/?reportNumber=",

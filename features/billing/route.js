@@ -7,7 +7,6 @@ const moment = require("moment");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SECRET_KEY = "your_secret_key";
-// const verifyToken = require("../../Middleware/verifytoken");
 const Cart = require("../cart/model");
 const Billing = require("./model");
 const nodemailer = require("nodemailer");

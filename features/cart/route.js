@@ -396,7 +396,7 @@ const orderDetails = async () => {
   };
 };
 
-router.get("/orderdetail", verifyLoginToken,async function (req, res) {
+router.get("/orderdetail",verifyLoginToken, verifyLoginToken,async function (req, res) {
   try {
     const result = await orderDetails();
 
