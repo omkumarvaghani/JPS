@@ -106,58 +106,85 @@ function getCertificateUrl(lab, certificateNo) {
   return `${urlBase}${encodeURIComponent(certificateNo)}`;
 }
 
-const fetchQuoteDetails = async () => {
-  const quotes = await userSchema.aggregate([
-    {
-      $match: { IsDelete: false },
-    },
-    {
-      $project: {
-        Image: 1,
-        Video: 1,
-        DiamondType: 1,
-        HA: 1,
-        Ratio: 1,
-        Tinge: 1,
-        Milky: 1,
-        EyeC: 1,
-        Table: 1,
-        Depth: 1,
-        measurements: 1,
-        Amount: 1,
-        Price: 1,
-        Disc: 1,
-        Rap: 1,
-        FluoInt: 1,
-        Symm: 1,
-        Polish: 1,
-        Cut: 1,
-        Clarity: 1,
-        Color: 1,
-        Carats: 1,
-        Shape: 1,
-        CertificateNo: 1,
-        Lab: 1,
-        SKU: 1,
-        SrNo: 1,
+const fetchQuoteDetails = async (query) => {
+  try {
+    
+    const pageSize = parseInt(query.pageSize) || 10; 
+    let pageNumber = parseInt(query.pageNumber) || 1; 
+
+    pageNumber = pageNumber - 1;
+
+    const quotes = await userSchema.aggregate([
+      {
+        $match: { IsDelete: false },
       },
-    },
-  ]);
+      {
+        $project: {
+          Image: 1,
+          Video: 1,
+          DiamondType: 1,
+          HA: 1,
+          Ratio: 1,
+          Tinge: 1,
+          Milky: 1,
+          EyeC: 1,
+          Table: 1,
+          Depth: 1,
+          measurements: 1,
+          Amount: 1,
+          Price: 1,
+          Disc: 1,
+          Rap: 1,
+          FluoInt: 1,
+          Symm: 1,
+          Polish: 1,
+          Cut: 1,
+          Clarity: 1,
+          Color: 1,
+          Carats: 1,
+          Shape: 1,
+          CertificateNo: 1,
+          Lab: 1,
+          SKU: 1,
+          SrNo: 1,
+        },
+      },
+      {
+        $sort: { createdAt: 1 },
+      }
+    ]);
 
-  const stockCount = quotes.length;
+    const stockCount = quotes.length;
 
-  return {
-    statusCode: quotes.length > 0 ? 200 : 204,
-    message:
-      quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
-    data: quotes,
-    TotalCount: stockCount,
-  };
+    const totalCount = quotes.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    const paginatedDiamonds = quotes.slice(pageNumber * pageSize, (pageNumber + 1) * pageSize);
+
+    return {
+      statusCode: quotes.length > 0 ? 200 : 204,
+      message:
+        quotes.length > 0 ? "Quotes retrieved successfully" : "No quotes found",
+      data: paginatedDiamonds.length > 0 ? paginatedDiamonds : quotes,
+      totalPages: totalPages,
+      currentPage: pageNumber + 1,  // Convert back to 1-based page number
+      TotalCount: stockCount,
+    };
+  } catch (error) {
+    console.error("Error fetching quote details:", error);
+    return {
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    };
+  }
 };
 
 router.get("/data", async function (req, res) {
   try {
-    const result = await fetchQuoteDetails();
+    const { pageSize, pageNumber } = req.query;
+    
+    const result = await fetchQuoteDetails({ pageSize, pageNumber });
 
     if (result.statusCode === 200) {
       result.data.forEach((diamond) => {
